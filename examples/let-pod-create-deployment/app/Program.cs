@@ -55,7 +55,7 @@ var deployment = new V1Deployment
                                     new()
                                     {
                                         Name = "http",
-                                        ContainerPort = 8080
+                                        ContainerPort = 80
                                     }
                                 }
                             }
