@@ -11,33 +11,59 @@ var config = KubernetesClientConfiguration.IsInCluster()
 
 var kubeClient = new Kubernetes(config);
 
-var deserializer = new DeserializerBuilder().Build();
-
-var deployment = deserializer.Deserialize<V1Deployment>($@"
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-    name: hello-world
-    namespace: default
-    labels:
-        control-plane: hello-world
-spec:
-    selector:
-        matchLabels:
-            app.kubernetes.io/name: hello-world
-    template:
-        metadata:
-            labels:
-                app.kubernetes.io/name: hello-world
-        spec:
-            containers:
-            -   name: hello-world
-                image: mcr.microsoft.com/azuredocs/containerapps-helloworld:latest
-                ports:
-                -   name: http
-                    containerPort: 8080
-            serviceAccountName: manager
-");
+var deployment = new V1Deployment
+  {
+            ApiVersion = "apps/v1",
+            Metadata = new()
+            {
+                Name = "hello-world",
+                Labels = new Dictionary<string, string>
+                {
+                    ["app.kubernetes.io/name"] = "hello-world"
+                }
+            },
+            Spec = new()
+            {
+                Replicas = 1,
+                Selector = new k8s.Models.V1LabelSelector()
+                {
+                    MatchLabels = new Dictionary<string, string>
+                    {
+                        ["app.kubernetes.io/name"] = "hello-world"
+                    }
+                },
+                Template = new()
+                {
+                    Metadata = new()
+                    {
+                        Labels = new Dictionary<string, string>
+                        {
+                            ["app.kubernetes.io/name"] = "hello-world"
+                        }
+                    },
+                    Spec = new()
+                    {
+                        Containers = new k8s.Models.V1Container[]
+                        {
+                            new()
+                            {
+                                Name = "hello-world",
+                                Image = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest",
+                                ImagePullPolicy = "Always",
+                                Ports = new k8s.Models.V1ContainerPort[]
+                                {
+                                    new()
+                                    {
+                                        Name = "http",
+                                        ContainerPort = 8080
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        };
 
 await kubeClient.CreateNamespacedDeploymentAsync(deployment, "default");
 
